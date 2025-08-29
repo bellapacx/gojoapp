@@ -681,13 +681,6 @@ const handleManualCheck = async () => {
   if (isWinner) {
     console.log(`Manual winner found: Card ID ${manualCardId}`);
     try {
-      const response = await submitWinning({
-        cardId: manualCardId,
-        roundId,
-        shopId,
-        prize,
-      });
-      console.log('Manual winning submission response:', response);
 
      await fetch(`https://gojbingoapi.onrender.com/finishround/${shopId}`, {
        method: "POST",
