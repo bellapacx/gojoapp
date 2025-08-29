@@ -52,7 +52,7 @@ useEffect(() => {
   const fetchShopData = async () => {
     try {
       const shop_id = localStorage.getItem('shopid');
-      const res = await fetch(`https://gojbingoapi.onrender.com/shop/lidu`);
+      const res = await fetch(`https://gojbingoapi.onrender.com/shop/${shop_id}`);
       if (!res.ok) throw new Error('Failed to fetch shop data');
 
       const { balance, commission_rate } = await res.json();

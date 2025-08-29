@@ -98,6 +98,20 @@ const gainNodeRef = useRef(null);
 const audioSourceRef = useRef(new Map()); 
  const gameAudioRef = useRef(null);
 const [bingoCardsData, setBingoCards] = useState([]);
+
+useEffect(() => {
+  const unlockAudio = () => {
+    if (audioContextRef.current?.state === "suspended") {
+      audioContextRef.current.resume();
+    }
+    window.removeEventListener("click", unlockAudio);
+    window.removeEventListener("keydown", unlockAudio);
+  };
+
+  window.addEventListener("click", unlockAudio);
+  window.addEventListener("keydown", unlockAudio);
+}, []);
+
 // Initialize AudioContext and GainNode once
   useEffect(() => {
     const AudioContextClass = window.AudioContext || window.webkitAudioContext;
