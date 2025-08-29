@@ -1,6 +1,6 @@
 // services/api.js
 export async function submitWinning({ cardId, roundId, shopId, prize }) {
-  const response = await fetch('http://127.0.0.1:8000/winings', {
+  const response = await fetch('https://gojoapp.vercel.app/winings', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
