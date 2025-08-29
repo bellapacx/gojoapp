@@ -91,7 +91,7 @@ const calculatePrize = () => {
   // Ensure commissionRate is a number between 0 and 1
   const rate = commission_rate != null
     ? parseFloat(commission_rate)
-    : 0.1; // default 10% if undefined
+    : 0.2; // default 10% if undefined
 
   return numSelected * bet * (1 - rate);
 };
