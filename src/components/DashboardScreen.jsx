@@ -270,7 +270,7 @@ useEffect(() => {
   const getCardGrid = (card) => {
     const grid = [];
     const columns = ['B', 'I', 'N', 'G', 'O'];
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 5; i++) {https://gojoapp.vercel.app/
       grid.push([]);
       for (let j = 0; j < 5; j++) {
         grid[i].push(card[columns[j]][i]);
@@ -690,8 +690,8 @@ const handleManualCheck = async () => {
       console.log('Manual winning submission response:', response);
 
      await fetch(`https://gojbingoapi.onrender.com/finishround/${shopId}`, {
-  method: "POST",
-});
+       method: "POST",
+      });
 
       setStatus("won");
       setIsRunning(false);
