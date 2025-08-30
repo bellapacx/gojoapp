@@ -93,8 +93,20 @@ export default function WinningCardsModal({
     if (!isCardChecked(cardId)) {
       setCheckedFailedCards((prev) => [...prev, cardId]);
     }
+    playCheckSound();
   };
-
+// Function to play check sound from public folder
+const playCheckSound = () => {
+  try {
+    // Play sound from public folder
+    const audio = new Audio('/game/failed.m4a'); // Adjust path if needed
+    audio.volume = 0.5; // Adjust volume as needed (0.0 to 1.0)
+    audio.play().catch(e => console.log("Audio play failed:", e));
+    
+  } catch (error) {
+    console.log("Sound playback error:", error);
+  }
+};
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
       <div className="bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 rounded-2xl shadow-2xl border border-white/20 p-8 w-full max-w-6xl max-h-[90vh] overflow-y-auto relative text-white">
@@ -151,7 +163,7 @@ export default function WinningCardsModal({
                         onClick={() => handleMarkAsChecked(card.card_id)}
                         className="mb-4 px-4 py-2 bg-red-600 hover:bg-red-700 rounded text-white font-semibold transition"
                       >
-                        Mark as Checked
+                        እሰር
                       </button>
                     )}
 
