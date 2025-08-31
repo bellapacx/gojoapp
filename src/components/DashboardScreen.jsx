@@ -593,10 +593,7 @@ const handleManualCheck = async () => {
     console.log(`Manual winner found: Card ID ${manualCardId}`);
     try {
 
-     await fetch(`https://gojbingoapi.onrender.com/finishround/${shopId}`, {
-       method: "POST",
-      });
-
+    
       setStatus("won");
       setIsRunning(false);
       setWinningCards([normalizedManualId]);
