@@ -21,30 +21,30 @@ export default function CardManagementScreen({ selectedCards, setCurrentView }) 
   }, [selectedCards]);
 
   // Auto-load last round
-useEffect(() => {
-  const loadLastRound = async () => {
+
+
+// Refresh cards
+const handleRefresh = async () => {
+  try {
     const shopId = localStorage.getItem("shopid");
     if (!shopId) return;
 
-    try {
-      const res = await fetch(`https://gojbingoapi.onrender.com/round/${shopId}`);
-      if (!res.ok) throw new Error("Failed to fetch last round");
+    const res = await fetch(`https://gojbingoapi.onrender.com/round/${shopId}`);
+    if (!res.ok) throw new Error("Failed to fetch round data");
 
-      const data = await res.json();
+    const data = await res.json();
 
-      if (data.status === "ongoing") {
-        setCurrentView({
-          name: "dashboard",
-          props: data,
-        });
-      }
-    } catch (err) {
-      console.error("Error loading last round:", err);
+    // If a round is active, mark its selected cards
+    if (data && data.selectedCards) {
+      setSelectedCardState(data.selectedCards);
+    } else {
+      setSelectedCardState([]); // fallback if no round
     }
-  };
-
-  loadLastRound();
-}, [setCurrentView]);
+  } catch (err) {
+    console.error("Error refreshing round data:", err);
+    setSelectedCardState([]);
+  }
+};
 
 
  // Fetch balance and commission rate
@@ -74,9 +74,7 @@ useEffect(() => {
   };
 
   // Refresh cards
-  const handleRefresh = () => {
-    setSelectedCardState([]);
-  };
+  
 
   // Logout
   const handleLogout = () => {
