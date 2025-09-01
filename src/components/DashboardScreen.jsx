@@ -149,7 +149,7 @@ useEffect(() => {
   // Control sounds
   preloadAudio("/game/start_game.m4a");
   preloadAudio("/game/pause_game.m4a");
-
+  preloadAudio("/game/shuffle.m4a");
   return () => {
     audioContextRef.current?.close();
   };
@@ -782,6 +782,17 @@ const callNextNumber = () => {
     }
   };
  const generateRandomBalls = () => {
+    const path = `/game/shuffle.m4a`;
+    const audio = audioCacheRef.current.get(path);
+    if (audio) {
+      try {
+        audio.pause();
+        audio.currentTime = 0;
+        audio.play().catch((err) => console.warn("🎧 Play error:", err));
+      } catch (err) {
+        console.warn("⚠️ playSoundForCall failed:", err);
+      }
+    }
     const newBalls = [];
     while (newBalls.length < 10) {
       const num = Math.floor(Math.random() * 75) + 1;
