@@ -94,38 +94,67 @@ const [patternType, setPatternType] = useState("line");
   const [availableVoices, setAvailableVoices] = useState([]);
   const audioCache = useRef(new Map());
   const audioContextRef = useRef(null);
+  const audioCacheRef = useRef(new Map()); // cache all audio elements
+  const audioSourceRef = useRef(new Map()); // keep MediaElementSourceNode references
 const gainNodeRef = useRef(null);
-const audioSourceRef = useRef(new Map()); 
+
  const gameAudioRef = useRef(null);
 const [bingoCardsData, setBingoCards] = useState([]);
 
+// --- Audio Setup ---
 useEffect(() => {
-  const unlockAudio = () => {
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  audioContextRef.current = new AudioContextClass();
+
+  // GainNode for volume boost
+  gainNodeRef.current = audioContextRef.current.createGain();
+  gainNodeRef.current.gain.value = 3.0;
+  gainNodeRef.current.connect(audioContextRef.current.destination);
+
+  // Unlock AudioContext on first gesture
+  const unlockAudio = async () => {
     if (audioContextRef.current?.state === "suspended") {
-      audioContextRef.current.resume();
+      try {
+        await audioContextRef.current.resume();
+        console.log("🔊 AudioContext resumed");
+      } catch (err) {
+        console.warn("⚠️ Resume failed:", err);
+      }
     }
-    window.removeEventListener("click", unlockAudio);
-    window.removeEventListener("keydown", unlockAudio);
   };
 
-  window.addEventListener("click", unlockAudio);
-  window.addEventListener("keydown", unlockAudio);
+  ["click", "touchstart", "keydown"].forEach(evt => {
+    window.addEventListener(evt, unlockAudio, { once: true });
+  });
+
+  // --- Preload all audio files ---
+  const preloadAudio = (path) => {
+    if (audioCacheRef.current.has(path)) return;
+
+    const audio = new Audio(path);
+    audio.preload = "auto";
+
+    audioCacheRef.current.set(path, audio);
+    // don’t call createMediaElementSource here!
+  };
+
+  // Bingo calls
+  const categories = ["b", "i", "n", "g", "o"];
+  categories.forEach((cat, idx) => {
+    for (let num = 1; num <= 15; num++) {
+      preloadAudio(`/voicemale/${cat}_${idx * 15 + num}.m4a`);
+    }
+  });
+
+  // Control sounds
+  preloadAudio("/game/start_game.m4a");
+  preloadAudio("/game/pause_game.m4a");
+
+  return () => {
+    audioContextRef.current?.close();
+  };
 }, []);
 
-// Initialize AudioContext and GainNode once
-  useEffect(() => {
-    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-    audioContextRef.current = new AudioContextClass();
-
-    // Create a single gain node for volume boost
-    gainNodeRef.current = audioContextRef.current.createGain();
-    gainNodeRef.current.gain.value = 3.0;
-    gainNodeRef.current.connect(audioContextRef.current.destination);
-
-    return () => {
-      audioContextRef.current.close();
-    };
-  }, []);
 
    useEffect(() => {
     const shopId = localStorage.getItem("shopid");
@@ -134,7 +163,7 @@ useEffect(() => {
       return;
     }
 
-    fetch(`/halobingo/data/${shopId}.json`)
+    fetch(`/gojoapp/data/${shopId}.json`)
       .then(res => {
         if (!res.ok) throw new Error("Not found");
         return res.json();
@@ -143,51 +172,44 @@ useEffect(() => {
       .catch(() => setBingoCards(bingoCards)); // fallback
   }, []);
 
-  /** Play a number call sound */
-  const playSoundForCall = (category, number) => {
+// 🔊 Play a number call instantly
+const playSoundForCall = (category, number) => {
+  if (!audioCacheRef.current) return;
   const audioPath = `/voicemale/${category.toLowerCase()}_${number}.m4a`;
+  const audio = audioCacheRef.current.get(audioPath);
+  if (!audio) return;
 
-  // Create a new Audio element for this call
-  const audio = new Audio(audioPath);
-
-  // Connect it once to the AudioContext
-  const source = audioContextRef.current.createMediaElementSource(audio);
-  source.connect(gainNodeRef.current);
-
-  // Play the audio
-  audio.play().catch((err) => console.warn("🎧 Audio play error:", err));
+  try {
+    audio.pause();
+    audio.currentTime = 0;
+    audio.play().catch((err) => console.warn("🎧 Play error:", err));
+  } catch (err) {
+    console.warn("⚠️ playSoundForCall failed:", err);
+  }
 };
 
-  /** Toggle play/pause game sound */
-  const togglePlayPause = () => {
-    // Dummy speech activation if needed
-    if (!isRunning && currentCall === null && speechUtteranceRef.current) {
-      const dummyUtterance = new SpeechSynthesisUtterance(" ");
-      window.speechSynthesis.speak(dummyUtterance);
-    }
+// 🎮 Toggle play/pause game sound
+const togglePlayPause = () => {
+  // Safari/Chrome hack: trigger speech once to unlock audio
+  if (!isRunning && currentCall === null && speechUtteranceRef.current) {
+    const dummyUtterance = new SpeechSynthesisUtterance(" ");
+    window.speechSynthesis.speak(dummyUtterance);
+  }
 
-    const path = !isRunning ? "/game/start_game.m4a" : "/game/pause_game.m4a";
+  const path = !isRunning ? "/game/start_game.m4a" : "/game/pause_game.m4a";
+  const audio = audioCacheRef.current.get(path);
+  if (!audio) return;
 
-    if (!gameAudioRef.current) {
-      gameAudioRef.current = new Audio(path);
-    } else {
-      gameAudioRef.current.src = path;
-      gameAudioRef.current.pause();
-      gameAudioRef.current.currentTime = 0;
-    }
+  try {
+    audio.pause();
+    audio.currentTime = 0;
+    audio.play().catch((err) => console.warn("🎮 Game audio error:", err));
+  } catch (err) {
+    console.warn("⚠️ togglePlayPause failed:", err);
+  }
 
-    if (!audioSourceRef.current.has(gameAudioRef.current)) {
-      const source = audioContextRef.current.createMediaElementSource(gameAudioRef.current);
-      source.connect(gainNodeRef.current);
-      audioSourceRef.current.set(gameAudioRef.current, source);
-    }
-
-    gameAudioRef.current.play().catch((err) =>
-      console.warn("Audio play blocked by browser:", err)
-    );
-
-    setIsRunning((prev) => !prev);
-  };
+  setIsRunning((prev) => !prev);
+};
 
 
 // Cleanup on component unmount
