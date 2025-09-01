@@ -105,25 +105,11 @@ const calculatePrize = () => {
     setIsLoading(true);
     try {
       const shopId = localStorage.getItem('shopid');
-      const res = await fetch("https://gojbingoapi.onrender.com/startgame", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          shop_id: shopId,
-          bet_per_card: bet,   
-          prize: calculatePrize(),
-          total_cards: selectedCardState.length,
-          selected_cards: selectedCardState,
-        }),
-      });
-
-      if (!res.ok) throw new Error("Game start failed");
-      const { round_id } = await res.json();
+      
 
       setCurrentView({
         name: "dashboard",
         props: {
-          roundId: round_id,
           shopId,
           prize: calculatePrize(),
           selectedCards: selectedCardState,

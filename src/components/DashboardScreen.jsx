@@ -88,7 +88,7 @@ const [bingoPattern, setBingoPattern] = useState(Array(25).fill(false));
 const [patternType, setPatternType] = useState("line"); 
  const [showBalls, setShowBalls] = useState(false);
   const [balls, setBalls] = useState([]);
-
+const [isLoading, setIsLoading] = useState(false);
   // State and ref for speech synthesis
   const speechUtteranceRef = useRef(null);
   const [availableVoices, setAvailableVoices] = useState([]);
@@ -504,7 +504,7 @@ const handleManualCheck = async () => {
     alert("No called numbers yet. Cannot check.");
     return;
   }
-
+  setIsLoading(true);
   const normalizedManualId = Number(manualCardId.trim());
 
   if (lockedCards.includes(normalizedManualId)) {
@@ -614,8 +614,30 @@ const handleManualCheck = async () => {
   if (isWinner) {
     console.log(`Manual winner found: Card ID ${manualCardId}`);
     try {
+      
+      // Submit winning to backend
+      try {
+      const shopId = localStorage.getItem('shopid');
+      const res = await fetch("https://gojbingoapi.onrender.com/startgame", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          shop_id: shopId,
+          bet_per_card: betPerCard,   
+          prize: prize,
+          total_cards: selectedCards.length,
+          selected_cards: selectedCards,
+        }),
+      });
 
-    
+      if (!res.ok) throw new Error("post failed");
+   
+    } catch (err) {
+      console.error("Error:", err);
+      alert("post failed");
+    } finally {
+      setIsLoading(false);
+    }
       setStatus("won");
       setIsRunning(false);
       setWinningCards([normalizedManualId]);
@@ -719,7 +741,7 @@ const callNextNumber = () => {
 
       winners.forEach(async (cardId) => {
         try {
-          await submitWinning({ cardId, roundId, shopId, prize });
+          await submitWinning({ cardId, shopId, prize });
         } catch (e) {
           console.error("Failed to submit winner:", cardId, e);
         }
@@ -1017,11 +1039,14 @@ const callNextNumber = () => {
         onChange={(e) => setManualCardId(e.target.value)}
         className="flex-grow w-full bg-white border border-slate-300 text-slate-800 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-slate-500 min-w-0"
       />
-      <button
+     <button
         onClick={handleManualCheck}
-        className="w-full sm:w-auto bg-slate-800 hover:bg-slate-700 text-white font-semibold px-4 py-2 rounded transition"
+         disabled={isLoading}
+              className={`bg-slate-800 hover:bg-green-700 text-white px-4 py-2 rounded font-bold mt-2 ${
+                isLoading ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
       >
-        Check
+        {isLoading ? 'Checking...' : 'Check'}
       </button>
     </div>
     <button onClick={restartGame} className="bg-yellow-600 text-white px-4 py-2 rounded">Register Cartela</button>
