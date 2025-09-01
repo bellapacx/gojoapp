@@ -101,6 +101,23 @@ const gainNodeRef = useRef(null);
  const gameAudioRef = useRef(null);
 const [bingoCardsData, setBingoCards] = useState([]);
 
+useEffect(() => {
+  const unlockAudio = async () => {
+    if (audioContextRef.current?.state === "suspended") {
+      try {
+        await audioContextRef.current.resume();
+        console.log("🔊 AudioContext resumed");
+      } catch (err) {
+        console.warn("⚠️ Resume failed:", err);
+      }
+    }
+  };
+
+  ["click", "keydown", "touchstart"].forEach(evt => 
+    window.addEventListener(evt, unlockAudio, { once: true })
+  );
+}, []);
+
 // --- Audio Setup ---
 function useOfflineAudio() {
   const audioContextRef = useRef(null);
@@ -180,22 +197,7 @@ function useOfflineAudio() {
 
   return { playSound };
 }
-useEffect(() => {
-  const unlockAudio = async () => {
-    if (audioContextRef.current?.state === "suspended") {
-      try {
-        await audioContextRef.current.resume();
-        console.log("🔊 AudioContext resumed");
-      } catch (err) {
-        console.warn("⚠️ Resume failed:", err);
-      }
-    }
-  };
 
-  ["click", "keydown", "touchstart"].forEach(evt => 
-    window.addEventListener(evt, unlockAudio, { once: true })
-  );
-}, []);
 
 
 
