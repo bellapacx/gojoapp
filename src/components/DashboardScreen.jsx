@@ -119,6 +119,59 @@ useEffect(() => {
 }, []);
 
 // --- Audio Setup ---
+useEffect(() => {
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  audioContextRef.current = new AudioContextClass();
+
+  // GainNode for volume boost
+  gainNodeRef.current = audioContextRef.current.createGain();
+  gainNodeRef.current.gain.value = 3.0;
+  gainNodeRef.current.connect(audioContextRef.current.destination);
+
+  // Unlock AudioContext on first gesture
+  const unlockAudio = async () => {
+    if (audioContextRef.current?.state === "suspended") {
+      try {
+        await audioContextRef.current.resume();
+        console.log("🔊 AudioContext resumed");
+      } catch (err) {
+        console.warn("⚠️ Resume failed:", err);
+      }
+    }
+  };
+
+  ["click", "touchstart", "keydown"].forEach(evt => {
+    window.addEventListener(evt, unlockAudio, { once: true });
+  });
+
+  // --- Preload all audio files ---
+  const preloadAudio = (path) => {
+    if (audioCacheRef.current.has(path)) return;
+
+    const audio = new Audio(path);
+    audio.preload = "auto";
+
+    audioCacheRef.current.set(path, audio);
+    // don’t call createMediaElementSource here!
+  };
+
+  // Bingo calls
+  const categories = ["b", "i", "n", "g", "o"];
+  categories.forEach((cat, idx) => {
+    for (let num = 1; num <= 15; num++) {
+      preloadAudio(`/voicemale/${cat}_${idx * 15 + num}.m4a`);
+    }
+  });
+
+  // Control sounds
+  preloadAudio("/game/start_game.m4a");
+  preloadAudio("/game/pause_game.m4a");
+  preloadAudio("/game/shuffle.m4a");
+  return () => {
+    audioContextRef.current?.close();
+  };
+}, []);
+
 function useOfflineAudio() {
   const audioContextRef = useRef(null);
   const audioBuffersRef = useRef(new Map());
@@ -218,7 +271,7 @@ function useOfflineAudio() {
   }, []);
 
 // 🔊 Play a number call instantly
-const playSoundForCalls = (category, number) => {
+const playSoundForCall = (category, number) => {
   if (!audioCacheRef.current) return;
   const audioPath = `/voicemale/${category.toLowerCase()}_${number}.m4a`;
   const audio = audioCacheRef.current.get(audioPath);
@@ -234,7 +287,7 @@ const playSoundForCalls = (category, number) => {
 };
 
 // 🎮 Toggle play/pause game sound
-const togglePlayPauses = () => {
+const togglePlayPause = () => {
   // Safari/Chrome hack: trigger speech once to unlock audio
   if (!isRunning && currentCall === null && speechUtteranceRef.current) {
     const dummyUtterance = new SpeechSynthesisUtterance(" ");
@@ -260,7 +313,7 @@ const togglePlayPauses = () => {
 const { playSound } = useOfflineAudio(); // your offline audio hook
 
 // 🔊 Play a number call instantly
-const playSoundForCall = (category, number) => {
+const playSoundForCallss = (category, number) => {
   const audioPath = `/voicemale/${category.toLowerCase()}_${number}.m4a`;
   try {
     playSound(audioPath);
@@ -270,7 +323,7 @@ const playSoundForCall = (category, number) => {
 };
 
 // 🎮 Toggle play/pause game sound
-const togglePlayPause = () => {
+const togglePlayPausess = () => {
   // Safari/Chrome hack: trigger speech once to unlock audio
   if (!isRunning && currentCall === null && speechUtteranceRef.current) {
     const dummyUtterance = new SpeechSynthesisUtterance(" ");
