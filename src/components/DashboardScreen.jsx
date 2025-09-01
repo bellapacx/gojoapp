@@ -779,6 +779,7 @@ const handleManualCheck = async () => {
       alert('Failed to submit manual winning.');
     }
   } else {
+    setIsLoading(false);
     setStatus("failed");
     setFailedCards([normalizedManualId]);
     setIsModalOpen(true);
@@ -1143,7 +1144,7 @@ const playShuffleSound = () => {
 
 
   {/* CONTROLS */}
-  <div className="flex justify-between items-center mt-2">
+  <div className="flex justify-between items-center mt-1">
     <button
           onClick={togglePlayPause}
           className={`flex items-center justify-center px-4 py-2 rounded-xl font-semibold shadow transition transform hover:scale-105 ${
