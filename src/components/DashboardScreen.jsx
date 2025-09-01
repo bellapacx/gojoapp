@@ -255,20 +255,21 @@ function useOfflineAudio() {
 
 
    useEffect(() => {
-    const shopId = localStorage.getItem("shopid");
-    if (!shopId) {
-      setBingoCards(bingoCardsData);
-      return;
-    }
+  const shopId = localStorage.getItem("shopid");
+  if (!shopId) {
+    setBingoCards(bingoCardsData); // local default
+    return;
+  }
 
-    fetch(`/gojoapp/data/${shopId}.json`)
-      .then(res => {
-        if (!res.ok) throw new Error("Not found");
-        return res.json();
-      })
-      .then(data => setBingoCards(data))
-      .catch(() => setBingoCards(bingoCards)); // fallback
-  }, []);
+  fetch(`/data/${shopId}.json`)
+    .then(res => {
+      if (!res.ok) throw new Error("Not found");
+      return res.json();
+    })
+    .then(data => setBingoCards(data))
+    .catch(() => setBingoCards(bingoCardsData)); // fallback to default
+}, []);
+
 
 // 🔊 Play a number call instantly
 const playSoundForCall = (category, number) => {
