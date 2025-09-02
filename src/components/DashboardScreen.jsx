@@ -938,7 +938,7 @@ const callNextNumber = () => {
 
   // Play shuffle sound
 const playShuffleSound = () => {
-  const path = "/audio/game/shuffle.m4a"; // ensure this file exists in /public/audio/game/
+  const path = "/game/shuffle.m4a"; // ensure this file exists in /public/audio/game/
 
   try {
     playSound(path); // plays instantly from AudioBuffer
