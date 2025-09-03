@@ -134,7 +134,7 @@ useEffect(() => {
       return res.json();
     })
     .then(data => setBingoCards(data))
-    .catch(() => setBingoCards(bingoCardsData)); // fallback to default
+    .catch(() => setBingoCards(bingoCards)); // fallback to default
 }, []);
 
 
