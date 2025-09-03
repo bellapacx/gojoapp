@@ -838,25 +838,8 @@ const restartGame = () => {
     }
   };
 
-  // Play shuffle sound
 const playShuffleSound = () => {
-  const path = "/game/shuffle.m4a"; // ensure it exists in /public/audio/game/
-  
-  let audioEl = audioCache.current.get(path);
-  
-  if (!audioEl) {
-    audioEl = new Audio(path);
-    audioCache.current.set(path, audioEl);
-
-    // Connect only once
-    const source = audioContextRef.current.createMediaElementSource(audioEl);
-    source.connect(gainNodeRef.current);
-  }
-
-  audioEl.currentTime = 0;
-  audioEl.play().catch((err) => {
-    console.warn("⚠️ playShuffleSound failed:", err);
-  });
+  playShuffle();
 };
  const generateRandomBalls = () => {
     playShuffleSound();
