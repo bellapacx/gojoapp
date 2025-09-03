@@ -169,7 +169,7 @@ const playCheckSound = () => {
                     )}
                      {status === 'failed' && !alreadyChecked && (
                       <button
-                        onClick={() => handleMarkAsChecked(card.card_id)}
+                        
                         className="mb-4 px-4 py-2 bg-green-600 hover:bg-red-700 rounded text-white font-semibold transition"
                       >
                         Good Bingo
