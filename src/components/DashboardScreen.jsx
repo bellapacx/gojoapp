@@ -100,7 +100,7 @@ const [round, setRound] = useState(1); // start at round 1
   const audioCacheRef = useRef(new Map()); // cache all audio elements
   const audioSourceRef = useRef(new Map()); // keep MediaElementSourceNode references
 const gainNodeRef = useRef(null);
-
+const audioRef = useRef(null);
  const gameAudioRef = useRef(null);
 const [bingoCardsData, setBingoCards] = useState([]);
 
@@ -125,22 +125,13 @@ useEffect(() => {
 }, []);
 
 useEffect(() => {
-  const unlockAudio = async () => {
-    if (audioContextRef.current?.state === "suspended") {
-      try {
-        await audioContextRef.current.resume();
-        console.log("🔊 AudioContext resumed");
-      } catch (err) {
-        console.warn("⚠️ Resume failed:", err);
-      }
-    }
-  };
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  audioContextRef.current = new AudioContextClass();
 
-  ["click", "keydown", "touchstart"].forEach(evt => 
-    window.addEventListener(evt, unlockAudio, { once: true })
-  );
+  gainNodeRef.current = audioContextRef.current.createGain();
+  gainNodeRef.current.gain.value = 3.0; // 3x louder
+  gainNodeRef.current.connect(audioContextRef.current.destination);
 }, []);
-
 
 
 
@@ -162,107 +153,34 @@ useEffect(() => {
 }, []);
 
 
-// 🔊 Play a number call instantly
-const playSoundForCalls = (category, number) => {
-  if (!audioCacheRef.current) return;
+
+
+const playSoundForCall = (category, number) => {
   const audioPath = `/voicemale/${category.toLowerCase()}_${number}.m4a`;
-  const audio = audioCacheRef.current.get(audioPath);
-  if (!audio) return;
 
-  try {
-    audio.pause();
-    audio.currentTime = 0;
-    audio.play().catch((err) => console.warn("🎧 Play error:", err));
-  } catch (err) {
-    console.warn("⚠️ playSoundForCall failed:", err);
+  if (audioRef.current) {
+    audioRef.current.pause();
+    audioRef.current.currentTime = 0;
   }
+
+  let audioEl = audioCache.current.get(audioPath);
+  if (!audioEl) {
+    audioEl = new Audio(audioPath);
+    audioCache.current.set(audioPath, audioEl);
+
+    // ✅ connect only once when creating new audio element
+    const source = audioContextRef.current.createMediaElementSource(audioEl);
+    source.connect(gainNodeRef.current);
+  }
+
+  audioRef.current = audioEl;
+
+  audioEl.currentTime = 0;
+  audioEl.play().catch((err) => {
+    console.warn("🎧 Audio play error:", err);
+  });
 };
 
-// 🎮 Toggle play/pause game sound
-const togglePlayPauses = () => {
-  // Safari/Chrome hack: trigger speech once to unlock audio
-  if (!isRunning && currentCall === null && speechUtteranceRef.current) {
-    const dummyUtterance = new SpeechSynthesisUtterance(" ");
-    window.speechSynthesis.speak(dummyUtterance);
-  }
-
-  const path = !isRunning ? "/game/start_game.m4a" : "/game/pause_game.m4a";
-  const audio = audioCacheRef.current.get(path);
-  if (!audio) return;
-
-  try {
-    audio.pause();
-    audio.currentTime = 0;
-    audio.play().catch((err) => console.warn("🎮 Game audio error:", err));
-  } catch (err) {
-    console.warn("⚠️ togglePlayPause failed:", err);
-  }
-
-  setIsRunning((prev) => !prev);
-};
-
-
-
-// 🔊 Play a number call instantly
-const playSoundForCallss = (category, number) => {
-  const audioPath = `/voicemale/${category.toLowerCase()}_${number}.m4a`;
-  try {
-    playSound(audioPath);
-  } catch (err) {
-    console.warn("⚠️ playSoundForCall failed:", err);
-  }
-};
-
-// 🎮 Toggle play/pause game sound
-const togglePlayPausess = () => {
-  // Safari/Chrome hack: trigger speech once to unlock audio
-  if (!isRunning && currentCall === null && speechUtteranceRef.current) {
-    const dummyUtterance = new SpeechSynthesisUtterance(" ");
-    window.speechSynthesis.speak(dummyUtterance);
-  }
-
-  const path = !isRunning ? "/game/start_game.m4a" : "/game/pause_game.m4a";
-
-  try {
-    playSound(path);
-  } catch (err) {
-    console.warn("⚠️ togglePlayPause failed:", err);
-  }
-
-  setIsRunning((prev) => !prev);
-};
-
-useEffect(() => {
-    const audio = new Audio("/game/shuffle.m4a");
-
-    // Create AudioContext and GainNode for volume boost
-    const AudioCtx = window.AudioContext || window.webkitAudioContext;
-    if (!AudioCtx) {
-      console.warn("AudioContext not supported in this browser");
-      return;
-    }
-
-    const audioContext = new AudioCtx();
-    const gainNode = audioContext.createGain();
-    gainNode.gain.value = 2.0;
-
-    const source = audioContext.createMediaElementSource(audio);
-    source.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-
-    audio.play().catch((err) => {
-      console.warn("Audio play blocked by browser:", err);
-    });
-
-    // Optional cleanup
-    return () => {
-      source.disconnect();
-      gainNode.disconnect();
-    };
-  }, []); 
-
-    const playSoundForCall = (category, number) => {
-};
 
 const togglePlayPause = () => {
     // Dummy speech activation (if needed)
