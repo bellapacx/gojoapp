@@ -938,7 +938,7 @@ const callNextNumber = () => {
 
   // Play shuffle sound
 const playShuffleSound = () => {
-  const path = "/audio/game/shuffle.m4a"; // ensure this file exists in /public/audio/game/
+  const path = "/game/shuffle.m4a"; // ensure this file exists in /public/audio/game/
 
   try {
     playSound(path); // plays instantly from AudioBuffer
@@ -957,7 +957,7 @@ const playShuffleSound = () => {
           left: Math.random() * 80 + 10, // 10-90% positioning
           top: Math.random() * 80 + 10,
           rotation: Math.random() * 60 - 30, // -30 to 30 degrees
-          delay: Math.random() * 4, // staggered appearance
+          delay: Math.random() * 6, // staggered appearance
           size: Math.random() * 40 + 100 // 60-80px diameter
         });
       }
@@ -967,7 +967,7 @@ const playShuffleSound = () => {
 
      setTimeout(() => {
     setShowBalls(false);
-  }, 2000);
+  }, 8000);
   };
 
   const getBallColor = (num) => {
