@@ -3,7 +3,7 @@ import { Play, Pause, RotateCcw, Maximize2 } from 'react-feather';
 import WinningCardsModal from './WinningcardsModal';
 import { submitWinning } from '../service/api'; // Adjust the import path as necessary
 import bingoCards from '../data/bingoCards.json'; // Ensure this path is correct
-
+import { useAudioManager } from "./audiomanager";
 const NUMBER_RANGE = Array.from({ length: 75 }, (_, i) => i + 1);
 const CATEGORIES = {
   B: [1, 15],
@@ -91,7 +91,7 @@ const [patternType, setPatternType] = useState("line");
 const [isLoading, setIsLoading] = useState(false);
 const [roundwon, setRoundWon] = useState(false);
 const [round, setRound] = useState(1); // start at round 1
-
+ const { playBingoCall, playShuffle, playStartGame, playPauseGame } = useAudioManager();
   // State and ref for speech synthesis
   const speechUtteranceRef = useRef(null);
   const [availableVoices, setAvailableVoices] = useState([]);
@@ -104,25 +104,10 @@ const audioRef = useRef(null);
  const gameAudioRef = useRef(null);
 const [bingoCardsData, setBingoCards] = useState([]);
 
-useEffect(() => {
-  const ranges = {
-    b: [1, 15],
-    i: [16, 30],
-    n: [31, 45],
-    g: [46, 60],
-    o: [61, 75],
-  };
 
-  for (const [cat, [start, end]] of Object.entries(ranges)) {
-    for (let i = start; i <= end; i++) {
-      const path = `/voicemale/${cat}_${i}.m4a`;
-      const audio = new Audio(path);
-      audioCache.current.set(path, audio);
-    }
-  }
 
-  console.log("✅ Correct audio files preloaded by column range");
-}, []);
+  // Generic function to play any cached sound
+ 
 
 useEffect(() => {
   const AudioContextClass = window.AudioContext || window.webkitAudioContext;
@@ -153,36 +138,61 @@ useEffect(() => {
 }, []);
 
 
+ const playSoundForCall = (category, number) => {
+  // Stop previous call handled automatically inside AudioManager
+  playBingoCall(category.toLowerCase(), number);
+};
 
-
-const playSoundForCall = (category, number) => {
+const playSoundForCalls = (category, number) => {
   const audioPath = `/voicemale/${category.toLowerCase()}_${number}.m4a`;
 
+  // Stop previous audio if playing
   if (audioRef.current) {
     audioRef.current.pause();
     audioRef.current.currentTime = 0;
   }
 
+  // Get preloaded audio from cache
   let audioEl = audioCache.current.get(audioPath);
   if (!audioEl) {
+    // Safety fallback: create & connect only once if not cached
     audioEl = new Audio(audioPath);
     audioCache.current.set(audioPath, audioEl);
 
-    // ✅ connect only once when creating new audio element
-    const source = audioContextRef.current.createMediaElementSource(audioEl);
-    source.connect(gainNodeRef.current);
+    if (audioContextRef.current && gainNodeRef.current) {
+      const source = audioContextRef.current.createMediaElementSource(audioEl);
+      source.connect(gainNodeRef.current);
+    }
   }
 
+  // Track as currently playing audio
   audioRef.current = audioEl;
 
+  // Play from start
   audioEl.currentTime = 0;
   audioEl.play().catch((err) => {
     console.warn("🎧 Audio play error:", err);
   });
 };
 
-
 const togglePlayPause = () => {
+  // Dummy speech activation if needed
+  if (!isRunning && currentCall === null && speechUtteranceRef.current) {
+    const dummyUtterance = new SpeechSynthesisUtterance(' ');
+    window.speechSynthesis.speak(dummyUtterance);
+  }
+
+  // Play appropriate sound via AudioManager
+  if (isRunning) {
+    playPauseGame();  // plays pause sound
+  } else {
+    playStartGame();  // plays start sound
+  }
+
+  // Toggle running state
+  setIsRunning(prev => !prev);
+};
+const togglePlayPauses = () => {
     // Dummy speech activation (if needed)
     if (!isRunning && currentCall === null && speechUtteranceRef.current) {
         const dummyUtterance = new SpeechSynthesisUtterance(' ');
