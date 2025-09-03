@@ -2,12 +2,12 @@ import React, { useState, useEffect } from 'react';
 
 const TOTAL_CARDS = 200;
 
-export default function CardManagementScreen({ selectedCards, setCurrentView }) {
+export default function CardManagementScreen({ round = 1,selectedCards, setCurrentView, patterns }) {
   const [selectedCardState, setSelectedCardState] = useState([]);
   const [bet, setBet] = useState(10);
   const [commission] = useState('20%');
   const [interval] = useState('4 sec');
-  const [pattern, setPattern] = useState('All');
+  const [pattern, setPattern] = useState('1 Line');
   const [language] = useState('Amharic');
   const [balance, setBalance] = useState(0);
    const [commission_rate, setCommission] = useState(0);
@@ -18,6 +18,7 @@ export default function CardManagementScreen({ selectedCards, setCurrentView }) 
     if (selectedCards && selectedCards.length > 0) {
       setSelectedCardState(selectedCards);
     }
+    setPattern(patterns || '1 Line');
   }, [selectedCards]);
 
   // Auto-load last round
@@ -142,7 +143,7 @@ const calculatePrize = () => {
         {/* Title + Refresh - now connected */}
         <div className="flex items-center justify-center mb-6 w-[calc(10*80px+9*16px)]">
           <div className="bg-orange-600 text-white text-xl font-bold px-6 py-2 rounded-l">
-            Select Cartela for round 1
+            Select Cartela for round  {round}
           </div>
           <button 
             onClick={handleRefresh}
@@ -196,10 +197,13 @@ const calculatePrize = () => {
                 onChange={(e) => setPattern(e.target.value)}
                 className="text-black bg-white rounded px-2 py-1"
               >
+                 <option>1 Line</option>
+        <option>2 Lines</option>
+        <option>Four Corners</option>
+        <option>Cross</option>
+        <option>Inner Corners + Center</option>
+        <option>Full House</option>
                 <option>All</option>
-                <option>any 1 Line</option>
-                <option>any 2 Line</option>
-                <option>Full House</option>
               </select>
             </label>
 

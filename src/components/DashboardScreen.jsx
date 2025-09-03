@@ -89,6 +89,9 @@ const [patternType, setPatternType] = useState("line");
  const [showBalls, setShowBalls] = useState(false);
   const [balls, setBalls] = useState([]);
 const [isLoading, setIsLoading] = useState(false);
+const [roundwon, setRoundWon] = useState(false);
+const [round, setRound] = useState(1); // start at round 1
+
   // State and ref for speech synthesis
   const speechUtteranceRef = useRef(null);
   const [availableVoices, setAvailableVoices] = useState([]);
@@ -760,6 +763,7 @@ const handleManualCheck = async () => {
           selected_cards: selectedCards,
         }),
       });
+      setRoundWon(true);
 
       if (!res.ok) throw new Error("post failed");
    
@@ -907,7 +911,7 @@ const callNextNumber = () => {
 
 
 
-  const restartGame = () => {
+  const restartGames = () => {
     setIsRunning(false);
     setCalledNumbers([]);
     setCurrentCall(null);
@@ -923,6 +927,32 @@ const callNextNumber = () => {
     
     window.speechSynthesis.cancel(); // Stop any speech on restart
   };
+const restartGame = () => {
+  setIsRunning(false);
+  setCalledNumbers([]);
+  setCurrentCall(null);
+  setWinningCards([]);
+  setIsModalOpen(false);
+
+  if (roundwon) {
+    // ✅ increment and pass round
+    setRound(prev => {
+      const nextRound = prev + 1;
+      setCurrentView({
+        name: 'card_management',
+        props: { round: nextRound, patterns: winningPattern },
+      });
+      return nextRound;
+    });
+  } else {
+    // ✅ pass selectedCards
+    setCurrentView({
+      name: 'card_management',
+      props: { selectedCards ,patterns: winningPattern},
+    });
+  }
+};
+
 
   const requestFullScreen = () => {
     if (document.documentElement.requestFullscreen) {
