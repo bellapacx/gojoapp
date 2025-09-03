@@ -275,7 +275,7 @@ function useOfflineAudio() {
 
 
 // 🔊 Play a number call instantly
-const playSoundForCall = (category, number) => {
+const playSoundForCalls = (category, number) => {
   if (!audioCacheRef.current) return;
   const audioPath = `/voicemale/${category.toLowerCase()}_${number}.m4a`;
   const audio = audioCacheRef.current.get(audioPath);
@@ -291,7 +291,7 @@ const playSoundForCall = (category, number) => {
 };
 
 // 🎮 Toggle play/pause game sound
-const togglePlayPause = () => {
+const togglePlayPauses = () => {
   // Safari/Chrome hack: trigger speech once to unlock audio
   if (!isRunning && currentCall === null && speechUtteranceRef.current) {
     const dummyUtterance = new SpeechSynthesisUtterance(" ");
@@ -317,7 +317,7 @@ const togglePlayPause = () => {
 const { playSound } = useOfflineAudio(); // your offline audio hook
 
 // 🔊 Play a number call instantly
-const playSoundForCallss = (category, number) => {
+const playSoundForCall = (category, number) => {
   const audioPath = `/voicemale/${category.toLowerCase()}_${number}.m4a`;
   try {
     playSound(audioPath);
@@ -327,7 +327,7 @@ const playSoundForCallss = (category, number) => {
 };
 
 // 🎮 Toggle play/pause game sound
-const togglePlayPausess = () => {
+const togglePlayPause = () => {
   // Safari/Chrome hack: trigger speech once to unlock audio
   if (!isRunning && currentCall === null && speechUtteranceRef.current) {
     const dummyUtterance = new SpeechSynthesisUtterance(" ");
