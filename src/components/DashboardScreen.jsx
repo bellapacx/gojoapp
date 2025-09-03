@@ -105,6 +105,26 @@ const gainNodeRef = useRef(null);
 const [bingoCardsData, setBingoCards] = useState([]);
 
 useEffect(() => {
+  const ranges = {
+    b: [1, 15],
+    i: [16, 30],
+    n: [31, 45],
+    g: [46, 60],
+    o: [61, 75],
+  };
+
+  for (const [cat, [start, end]] of Object.entries(ranges)) {
+    for (let i = start; i <= end; i++) {
+      const path = `/voicemale/${cat}_${i}.m4a`;
+      const audio = new Audio(path);
+      audioCache.current.set(path, audio);
+    }
+  }
+
+  console.log("✅ Correct audio files preloaded by column range");
+}, []);
+
+useEffect(() => {
   const unlockAudio = async () => {
     if (audioContextRef.current?.state === "suspended") {
       try {
@@ -121,138 +141,6 @@ useEffect(() => {
   );
 }, []);
 
-// --- Audio Setup ---
-useEffect(() => {
-  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-  audioContextRef.current = new AudioContextClass();
-
-  // GainNode for volume boost
-  gainNodeRef.current = audioContextRef.current.createGain();
-  gainNodeRef.current.gain.value = 3.0;
-  gainNodeRef.current.connect(audioContextRef.current.destination);
-
-  // Unlock AudioContext on first gesture
-  const unlockAudio = async () => {
-    if (audioContextRef.current?.state === "suspended") {
-      try {
-        await audioContextRef.current.resume();
-        console.log("🔊 AudioContext resumed");
-      } catch (err) {
-        console.warn("⚠️ Resume failed:", err);
-      }
-    }
-  };
-
-  ["click", "touchstart", "keydown"].forEach(evt => {
-    window.addEventListener(evt, unlockAudio, { once: true });
-  });
-
-  // --- Preload all audio files ---
-  const preloadAudio = (path) => {
-    if (audioCacheRef.current.has(path)) return;
-
-    const audio = new Audio(path);
-    audio.preload = "auto";
-
-    audioCacheRef.current.set(path, audio);
-    // don’t call createMediaElementSource here!
-  };
-
-  // Bingo calls
-  const categories = ["b", "i", "n", "g", "o"];
-  categories.forEach((cat, idx) => {
-    for (let num = 1; num <= 15; num++) {
-      preloadAudio(`/voicemale/${cat}_${idx * 15 + num}.m4a`);
-    }
-  });
-
-  // Control sounds
-  preloadAudio("/game/start_game.m4a");
-  preloadAudio("/game/pause_game.m4a");
-  preloadAudio("/game/shuffle.m4a");
-  return () => {
-    audioContextRef.current?.close();
-  };
-}, []);
-
-function useOfflineAudio() {
-  const audioContextRef = useRef(null);
-  const audioBuffersRef = useRef(new Map());
-
-  useEffect(() => {
-    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-    audioContextRef.current = new AudioContextClass();
-
-    // GainNode for volume boost
-    const gainNode = audioContextRef.current.createGain();
-    gainNode.gain.value = 3.0;
-    gainNode.connect(audioContextRef.current.destination);
-
-    // Unlock AudioContext on first gesture
-    const unlockAudio = async () => {
-      if (audioContextRef.current?.state === "suspended") {
-        try {
-          await audioContextRef.current.resume();
-          console.log("🔊 AudioContext resumed");
-        } catch (err) {
-          console.warn("⚠️ Resume failed:", err);
-        }
-      }
-    };
-
-    ["click", "touchstart", "keydown"].forEach((evt) =>
-      window.addEventListener(evt, unlockAudio, { once: true })
-    );
-
-    // Preload audio into AudioBuffer
-    const preloadAudioBuffer = async (path) => {
-      if (audioBuffersRef.current.has(path)) return;
-      try {
-        const response = await fetch(path); // from public folder
-        const arrayBuffer = await response.arrayBuffer();
-        const audioBuffer = await audioContextRef.current.decodeAudioData(arrayBuffer);
-        audioBuffersRef.current.set(path, audioBuffer);
-      } catch (err) {
-        console.warn("⚠️ Failed to preload audio:", path, err);
-      }
-    };
-
-    // Bingo calls
-    const categories = ["b", "i", "n", "g", "o"];
-    categories.forEach((cat, idx) => {
-      for (let num = 1; num <= 15; num++) {
-        preloadAudioBuffer(`/voicemale/${cat}_${idx * 15 + num}.m4a`);
-      }
-    });
-
-    // Control sounds
-    ["/game/start_game.m4a", "/game/pause_game.m4a", "/game/shuffle.m4a"]
-      .forEach(preloadAudioBuffer);
-
-    return () => {
-      audioContextRef.current?.close();
-    };
-  }, []);
-
-  const playSound = (path) => {
-  const buffer = audioBuffersRef.current.get(path);
-  if (!buffer || !audioContextRef.current) {
-    console.warn("Audio buffer not loaded:", path);
-    return;
-  }
-
-  const source = audioContextRef.current.createBufferSource();
-  source.buffer = buffer;
-
-  const gainNode = audioContextRef.current.createGain();
-  gainNode.gain.value = 3.0;
-  source.connect(gainNode).connect(audioContextRef.current.destination);
-
-  source.start(0);
-};
-
-  return { playSound };
-}
 
 
 
@@ -313,11 +201,10 @@ const togglePlayPauses = () => {
   setIsRunning((prev) => !prev);
 };
 
-// --- Inside your component ---
-const { playSound } = useOfflineAudio(); // your offline audio hook
+
 
 // 🔊 Play a number call instantly
-const playSoundForCall = (category, number) => {
+const playSoundForCallss = (category, number) => {
   const audioPath = `/voicemale/${category.toLowerCase()}_${number}.m4a`;
   try {
     playSound(audioPath);
@@ -327,7 +214,7 @@ const playSoundForCall = (category, number) => {
 };
 
 // 🎮 Toggle play/pause game sound
-const togglePlayPause = () => {
+const togglePlayPausess = () => {
   // Safari/Chrome hack: trigger speech once to unlock audio
   if (!isRunning && currentCall === null && speechUtteranceRef.current) {
     const dummyUtterance = new SpeechSynthesisUtterance(" ");
@@ -345,7 +232,64 @@ const togglePlayPause = () => {
   setIsRunning((prev) => !prev);
 };
 
+useEffect(() => {
+    const audio = new Audio("/game/shuffle.m4a");
 
+    // Create AudioContext and GainNode for volume boost
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) {
+      console.warn("AudioContext not supported in this browser");
+      return;
+    }
+
+    const audioContext = new AudioCtx();
+    const gainNode = audioContext.createGain();
+    gainNode.gain.value = 2.0;
+
+    const source = audioContext.createMediaElementSource(audio);
+    source.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+
+    audio.play().catch((err) => {
+      console.warn("Audio play blocked by browser:", err);
+    });
+
+    // Optional cleanup
+    return () => {
+      source.disconnect();
+      gainNode.disconnect();
+    };
+  }, []); 
+
+    const playSoundForCall = (category, number) => {
+};
+
+const togglePlayPause = () => {
+    // Dummy speech activation (if needed)
+    if (!isRunning && currentCall === null && speechUtteranceRef.current) {
+        const dummyUtterance = new SpeechSynthesisUtterance(' ');
+        window.speechSynthesis.speak(dummyUtterance);
+    }
+
+    // Play sound with Web Audio API for volume boost
+    const audio = new Audio(!isRunning ? "/game/start_game.m4a" : "/game/pause_game.m4a");
+    
+    // Create AudioContext and GainNode
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const gainNode = audioContext.createGain();
+    gainNode.gain.value = 3.0; // 200% louder (1.0 = normal, 3.0 = 300% volume)
+
+    // Connect audio to gain node and output
+    const source = audioContext.createMediaElementSource(audio);
+    source.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+
+    audio.play().catch((err) => {
+        console.warn("Audio play blocked by browser:", err);
+    });
+  
+    setIsRunning((prev) => !prev);
+};
 // Cleanup on component unmount
 
   // --- Speech Synthesis Setup ---
