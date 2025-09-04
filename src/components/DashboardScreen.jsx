@@ -857,24 +857,31 @@ const restartGame = () => {
   setWinningCards([]);
   setIsModalOpen(false);
 
+  // Get today's date string (e.g., "2025-09-04")
+  const today = new Date().toISOString().split('T')[0];
+
+  // Load persisted rounds
+  const storedRounds = JSON.parse(localStorage.getItem('dailyRounds') || '{}');
+  let todayRound = storedRounds[today] || 0; // default 0 if not exists
+
   if (roundwon) {
-    // ✅ increment and pass round
-    setRound(prev => {
-      const nextRound = prev + 1;
-      setCurrentView({
-        name: 'card_management',
-        props: { round: nextRound, patterns: winningPattern },
-      });
-      return nextRound;
-    });
-  } else {
-    // ✅ pass selectedCards
+    todayRound += 1; // increment round
+    storedRounds[today] = todayRound; // update for today
+    localStorage.setItem('dailyRounds', JSON.stringify(storedRounds));
+
+    setRound(todayRound);
     setCurrentView({
       name: 'card_management',
-      props: { selectedCards ,patterns: winningPattern},
+      props: { round: todayRound, patterns: winningPattern },
+    });
+  } else {
+    setCurrentView({
+      name: 'card_management',
+      props: { selectedCards, patterns: winningPattern },
     });
   }
 };
+
 
 
   const requestFullScreen = () => {
