@@ -38,24 +38,6 @@ const categoryColors = {
   O: 'bg-gradient-to-br from-amber-400 via-orange-600 to-orange-900 text-amber-50 border-amber-400 shadow-orange-300/30',
 };
 
-// Converts a number (1-75) to Amharic words
-const amharicNumbers = [
-  '', 'አንድ', 'ሁለት', 'ሶስት', 'አራት', 'አምስት', 'ስድስት', 'ሰባት', 'ስምንት', 'ዘጠኝ', 'አስር',
-  'አስራ አንድ', 'አስራ ሁለት', 'አስራ ሶስት', 'አስራ አራት', 'አስራ አምስት', 'አስራ ስድስት', 'አስራ ሰባት', 'አስራ ስምንት', 'አስራ ዘጠኝ',
-  'ሃያ', 'ሃያ አንድ', 'ሃያ ሁለት', 'ሃያ ሶስት', 'ሃያ አራት', 'ሃያ አምስት', 'ሃያ ስድስት', 'ሃያ ሰባት', 'ሃያ ስምንት', 'ሃያ ዘጠኝ',
-  'ሰላሳ', 'ሰላሳ አንድ', 'ሰላሳ ሁለት', 'ሰላሳ ሶስት', 'ሰላሳ አራት', 'ሰላሳ አምስት', 'ሰላሳ ስድስት', 'ሰላሳ ሰባት', 'ሰላሳ ስምንት', 'ሰላሳ ዘጠኝ',
-  'አርባ', 'አርባ አንድ', 'አርባ ሁለት', 'አርባ ሶስት', 'አርባ አራት', 'አርባ አምስት', 'አርባ ስድስት', 'አርባ ሰባት', 'አርባ ስምንት', 'አርባ ዘጠኝ',
-  'ሃምሳ', 'ሃምሳ አንድ', 'ሃምሳ ሁለት', 'ሃምሳ ሶስት', 'ሃምሳ አራት', 'ሃምሳ አምስት', 'ሃምሳ ስድስት', 'ሃምሳ ሰባት', 'ሃምሳ ስምንት', 'ሃምሳ ዘጠኝ',
-  'ስልሳ', 'ስልሳ አንድ', 'ስልሳ ሁለት', 'ስልሳ ሶስት', 'ስልሳ አራት', 'ስልሳ አምስት', 'ስልሳ ስድስት', 'ስልሳ ሰባት', 'ስልሳ ስምንት', 'ስልሳ ዘጠኝ',
-  'ሰባ', 'ሰባ አንድ', 'ሰባ ሁለት', 'ሰባ ሶስት', 'ሰባ አራት', 'ሰባ አምስት'
-];
-
-
-
-
-function getAmharicNumber(num) {
-  return amharicNumbers[num] || num.toString();
-}
 
 export default function DashboardScreen({
   roundId,
@@ -76,13 +58,14 @@ export default function DashboardScreen({
    const [failedCards, setFailedCards] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [manualCardId, setManualCardId] = useState('');
+  const [selectedCardId, setSelectedCardId] = useState(null);
   const [mode, setMode] = useState('manual');
   const [status, setStatus] = useState("won");
 const [lastWinCheckNumberCount, setLastWinCheckNumberCount] = useState(0);
-const [passedCards, setPassedCards] = useState([]);
+const [passedCards, setPassedCards] = useState(new Set());
 const [lockedCards, setLockedCards] = useState([]);
 const intervalRef = useRef(null); 
-const [winningPatterns, setWinningPatterns] = useState({});
+const [winningPatterns, setWinningPatterns] = useState('');
 const [restartedCards, setRestartedCards] = useState([]);
 const [bingoPattern, setBingoPattern] = useState(Array(25).fill(false));
 const [patternType, setPatternType] = useState("line"); 
@@ -500,7 +483,7 @@ const gameOverRef = useRef(false);
  // Main win checking function
 
 //manual check function
-const handleManualCheck = async () => {
+const handleManualChecks = async () => {
   if (!manualCardId) {
     alert("Please enter a Card ID.");
     return;
@@ -527,7 +510,7 @@ const handleManualCheck = async () => {
     alert("Card ID not found in selected cards.");
     return;
   }
-
+  setWinningPatterns(winningPattern);
   const currentCalledNumbersSet = new Set(calledNumbers);
   const cardGrid = getCardGrid(card);
   let isWinner = false;
@@ -660,6 +643,74 @@ const handleManualCheck = async () => {
     setStatus("failed");
     setFailedCards([normalizedManualId]);
     setIsModalOpen(true);
+  }
+};
+
+const handleManualCheck = async () => {
+  if (!manualCardId) {
+    alert("Please enter a Card ID.");
+    return;
+  }
+
+  const cardIdNumber = Number(manualCardId);
+  setSelectedCardId(cardIdNumber);
+
+  if (!calledNumbers.length) {
+    alert("No called numbers yet. Cannot check.");
+    return;
+  }
+
+  const selectedCardsData = bingoCardsData.filter(card =>
+    selectedCards.includes(card.card_id)
+  );
+  const card = selectedCardsData.find(c => c.card_id === cardIdNumber);
+
+  if (!card) {
+    alert("Card ID not found in selected cards.");
+    return;
+  }
+
+  // Check if this card has already been passed
+  if (passedCards.has(cardIdNumber)) {
+   
+    setIsModalOpen(true); // open modal without posting
+    return;
+  }
+
+  // If passedCards already has cards, skip posting but still open modal
+  const shouldPost = passedCards.size === 0;
+
+  setIsLoading(true);
+  try {
+    if (shouldPost) {
+      const shopId = localStorage.getItem('shopid');
+
+      const res = await fetch("https://gojbingoapi.onrender.com/startgame", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          shop_id: shopId,
+          bet_per_card: betPerCard,
+          prize: prize,
+          total_cards: selectedCards.length,
+          selected_cards: selectedCards,
+        }),
+      });
+
+      if (!res.ok) throw new Error("post failed");
+
+      setRoundWon(true);
+
+      // mark this card as passed
+      setPassedCards(prev => new Set(prev).add(cardIdNumber));
+    }
+
+  } catch (err) {
+    console.error("Error:", err);
+    alert("post failed");
+  } finally {
+    setIsLoading(false);
+    setIsModalOpen(true); // always open modal
   }
 };
 
@@ -1061,7 +1112,7 @@ const playShuffleSound = () => {
     </select>
     <div className="flex flex-col sm:flex-row gap-3 w-40">
       <input
-        type="text"
+        type="number"
         placeholder="Enter Card ID"
         value={manualCardId}
         onChange={(e) => setManualCardId(e.target.value)}
@@ -1085,11 +1136,10 @@ const playShuffleSound = () => {
     isOpen={isModalOpen}
     onClose={() => setIsModalOpen(false)}
     winningCardIds={winningCards}
-    failedCards={failedCards}
     allBingoCards={bingoCardsData}
-    calledNumbersSet={new Set(calledNumbers)}
-    status={status}
-    winningPatterns={winningPatterns}
+    calledNumbers={new Set(calledNumbers)}
+    initialManualCardId={selectedCardId}
+    winningPattern={winningPattern}
   />
 </div>
 
