@@ -15,13 +15,22 @@ const CATEGORIES = {
 // Define all patterns
 const patterns = {
   line: [
-    [0, 1, 2, 3, 4],
+    [0, 1, 2, 3, 4],        // Row 0
+  ],
+  twoLines: [
+    [0, 1, 2, 3, 4, 10, 11, 12, 13, 14],   // Row 0 + Row 1
+  ],
+  threeLines: [
+    [0, 1, 2, 3, 4, 10, 11, 12, 13, 14, 20, 21, 22, 23,24], // Row 0 + Row 1 + Row 2
   ],
   diagonal: [
-    [0, 6, 12, 18, 24],
+    [0, 6, 12, 18, 24],      // TL → BR
   ],
-  fullhouse: [Array.from({ length: 25 }, (_, i) => i)],
+  fullhouse: [
+    Array.from({ length: 25 }, (_, i) => i),
+  ],
 };
+
 const getCategory = (num) => {
   for (const [key, [min, max]] of Object.entries(CATEGORIES)) {
     if (num >= min && num <= max) return key;
@@ -244,7 +253,7 @@ const togglePlayPauses = () => {
 
  // Auto-cycle pattern type every X seconds
   useEffect(() => {
-    const cycleOrder = ["line", "diagonal", "fullhouse"];
+    const cycleOrder = ["line","twoLines", "threeLines", "diagonal", "fullhouse"];
     let typeIndex = 0;
 
     const cycleInterval = setInterval(() => {

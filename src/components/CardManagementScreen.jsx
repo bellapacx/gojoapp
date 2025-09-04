@@ -210,6 +210,7 @@ const calculatePrize = () => {
               >
                  <option>1 Line</option>
         <option>2 Lines</option>
+        <option>3 Lines</option>
         <option>Four Corners</option>
         <option>Cross</option>
         <option>Inner Corners + Center</option>

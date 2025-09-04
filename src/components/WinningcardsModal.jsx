@@ -79,6 +79,10 @@ export default function WinningCardsModal({
         if (completedLines.length >= 2)
           coords = [...completedLines[0], ...completedLines[1]];
         break;
+      case '3 Lines':
+        if (completedLines.length >= 3)
+          coords = [...completedLines[0], ...completedLines[1], ...completedLines[2]];
+        break;
       case 'Full House':
         if (cardGridFullyMarked(card)) coords = getFullHouseCoords(card);
         break;
