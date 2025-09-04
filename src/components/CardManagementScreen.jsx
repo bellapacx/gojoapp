@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 
 const TOTAL_CARDS = 200;
 
-export default function CardManagementScreen({ round = 1,selectedCards, setCurrentView, patterns }) {
+export default function CardManagementScreen({ round ,selectedCards, setCurrentView, patterns }) {
   const [selectedCardState, setSelectedCardState] = useState([]);
+   const [rounds, setRound] = useState(1);
   const [bet, setBet] = useState(10);
   const [commission] = useState('20%');
   const [interval] = useState('4 sec');
@@ -20,9 +21,19 @@ export default function CardManagementScreen({ round = 1,selectedCards, setCurre
     }
     setPattern(patterns || '1 Line');
   }, [selectedCards]);
-
   // Auto-load last round
+useEffect(() => {
+    const today = new Date().toISOString().split('T')[0];
+    const storedRounds = JSON.parse(localStorage.getItem('dailyRounds') || '{}');
+    const todayRound = storedRounds[today] || 1;
 
+    // Use propRound if passed, otherwise use today's stored round
+    if (round) {
+      setRound(round);
+    } else {
+      setRound(todayRound);
+    }
+  }, [round]);
 
 // Refresh cards
 const handleRefresh = async () => {
@@ -143,7 +154,7 @@ const calculatePrize = () => {
         {/* Title + Refresh - now connected */}
         <div className="flex items-center justify-center mb-6 w-[calc(10*80px+9*16px)]">
           <div className="bg-orange-600 text-white text-xl font-bold px-6 py-2 rounded-l">
-            Select Cartela for round  {round}
+            Select Cartela for round  {rounds}
           </div>
           <button 
             onClick={handleRefresh}

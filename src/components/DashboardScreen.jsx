@@ -667,6 +667,7 @@ const handleManualCheck = async () => {
 
   if (!card) {
     alert("Card ID not found in selected cards.");
+    setIsLoading(false);
     return;
   }
 
@@ -857,30 +858,30 @@ const restartGame = () => {
   setWinningCards([]);
   setIsModalOpen(false);
 
-  // Get today's date string (e.g., "2025-09-04")
   const today = new Date().toISOString().split('T')[0];
-
-  // Load persisted rounds
   const storedRounds = JSON.parse(localStorage.getItem('dailyRounds') || '{}');
-  let todayRound = storedRounds[today] || 0; // default 0 if not exists
+  let todayRound = storedRounds[today] || 1; // start from 1 if not exists
 
   if (roundwon) {
-    todayRound += 1; // increment round
-    storedRounds[today] = todayRound; // update for today
+    // Increment and persist today's round
+    todayRound += 1;
+    storedRounds[today] = todayRound;
     localStorage.setItem('dailyRounds', JSON.stringify(storedRounds));
 
-    setRound(todayRound);
+    setRound(todayRound); // update local state
     setCurrentView({
       name: 'card_management',
       props: { round: todayRound, patterns: winningPattern },
     });
   } else {
+    // Do not increment round, just pass selectedCards
     setCurrentView({
       name: 'card_management',
       props: { selectedCards, patterns: winningPattern },
     });
   }
 };
+
 
 
 
