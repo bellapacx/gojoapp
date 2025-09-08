@@ -83,7 +83,7 @@ const [patternType, setPatternType] = useState("line");
 const [isLoading, setIsLoading] = useState(false);
 const [roundwon, setRoundWon] = useState(false);
 const [round, setRound] = useState(1); // start at round 1
- const { playBingoCall, playShuffle, playStartGame, playPauseGame } = useAudioManager();
+ const { playBingoCall, playShuffle, playStartGame, playPauseGame, playNoIdGame } = useAudioManager();
   // State and ref for speech synthesis
   const speechUtteranceRef = useRef(null);
   const [availableVoices, setAvailableVoices] = useState([]);
@@ -673,9 +673,11 @@ const handleManualCheck = async () => {
     selectedCards.includes(card.card_id)
   );
   const card = selectedCardsData.find(c => c.card_id === cardIdNumber);
-
+  const playnoidSound = () => {
+  playNoIdGame();
+};
   if (!card) {
-    alert("Card ID not found in selected cards.");
+    playNoIdGame();
     setIsLoading(false);
     return;
   }
@@ -1157,6 +1159,7 @@ const playShuffleSound = () => {
     calledNumbers={new Set(calledNumbers)}
     initialManualCardId={selectedCardId}
     winningPattern={winningPattern}
+    selectedCards={selectedCards}
   />
 </div>
 

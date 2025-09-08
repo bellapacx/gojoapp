@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { XCircle } from 'react-feather';
-
+import { useAudioManager } from "./audiomanager";
 // --- Bingo utilities ---
 const getCardGrid = (card) => {
   const grid = [];
@@ -53,12 +53,13 @@ export default function WinningCardsModal({
   initialManualCardId = '',
   winningPattern,
   calledNumbers = [],
+  selectedCards = [],
 }) {
   const [manualCardId, setManualCardId] = useState(initialManualCardId?.toString() || '');
   const [winningPatterns, setWinningPatterns] = useState({});
   const [lockedCards, setLockedCards] = useState(new Set());
   const calledNumbersSet = new Set(calledNumbers);
-  
+  const { playBingoCall, playShuffle, playStartGame, playPauseGame, playNoIdGame } = useAudioManager();
   useEffect(() => {
     if (isOpen) setManualCardId(initialManualCardId?.toString() || '');
   }, [isOpen, initialManualCardId]);
@@ -204,10 +205,22 @@ export default function WinningCardsModal({
               placeholder="Enter Card ID"
               value={manualCardId}
               onChange={e => setManualCardId(e.target.value)}
-              className="px-2 py-1 rounded text-white bg-black/20 border border-white/30 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition w-32 text-center"
+               className="px-2 py-1 rounded text-white bg-black/20 border border-white/30 
+             focus:outline-none focus:ring-2 focus:ring-yellow-400 transition 
+             w-32 text-center appearance-none [&::-webkit-inner-spin-button]:appearance-none 
+             [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield]"
             />
             <button
-              onClick={() => updateWinningPattern(manualCardId)}
+               onClick={() => {
+        if (manualCardId) {
+          const id = Number(manualCardId);
+          if (selectedCards.includes(id)) {
+            updateWinningPattern(id);
+          } else {
+            playNoIdGame(); // 🚨 not in selected cards
+          }
+        }
+      }}
               className="px-4 py-2 rounded font-semibold transition bg-yellow-500 hover:bg-yellow-600 text-black"
             >
               Check

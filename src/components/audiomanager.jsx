@@ -47,7 +47,7 @@ export const useAudioManager = () => {
     }
 
     // Preload other game sounds
-    ["/game/shuffle.m4a", "/game/start_game.m4a", "/game/pause_game.m4a"].forEach(
+    ["/game/shuffle.m4a", "/game/start_game.m4a", "/game/pause_game.m4a","/game/noid.m4a"].forEach(
       (path) => {
         const audio = new Audio(path);
         const source = audioContextRef.current.createMediaElementSource(audio);
@@ -80,6 +80,7 @@ export const useAudioManager = () => {
   const playShuffle = () => playSound("/game/shuffle.m4a");
   const playStartGame = () => playSound("/game/start_game.m4a");
   const playPauseGame = () => playSound("/game/pause_game.m4a");
+    const playNoIdGame = () => playSound("/game/noid.m4a");
 
   return {
     playBingoCall,
@@ -87,5 +88,6 @@ export const useAudioManager = () => {
     playStartGame,
     playPauseGame,
     playSound,
+    playNoIdGame
   };
 };
