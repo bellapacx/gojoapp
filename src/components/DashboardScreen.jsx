@@ -991,9 +991,12 @@ const playShuffleSound = () => {
 
     {/* Recent Calls */}
    {/* Recent Calls - now using currentCall array */}
-       <div className="bg-blue-900 p-2 rounded-lg shadow-lg">
-  <div className="text-white text-center text-2xl font-bold mb-4">Recent Calls</div>
-  <div className="flex flex-col items-center gap-3">
+      <div className="relative bg-blue-900 p-4 rounded-lg shadow-lg flex flex-col items-center">
+  <div className="text-white text-2xl font-bold mb-4 text-center">
+    Recent Calls
+  </div>
+
+  <div className="flex flex-col items-center gap-3 relative">
     {[...calledNumbers.slice(0, 3)].map((n, i) => (
       <div
         key={i}
@@ -1011,7 +1014,8 @@ const playShuffleSound = () => {
         {n ? n.toString().padStart(2, '0') : '--'}
       </div>
     ))}
-    {/* Fill empty slots if less than 5 calls */}
+
+    {/* Fill empty slots if less than 3 calls */}
     {Array.from({ length: 3 - calledNumbers.length }).map((_, i) => (
       <div
         key={`empty-${i}`}
@@ -1020,8 +1024,16 @@ const playShuffleSound = () => {
         --
       </div>
     ))}
+
+    {/* 🔵 Single Counter on the right */}
+    <div className="absolute left-20 top-1/2 -translate-y-1/2">
+      <div className="w-14 h-14 flex items-center justify-center rounded-full bg-gray-300 text-blue-900 font-bold text-lg shadow-md">
+        {calledNumbers.length}
+      </div>
+    </div>
   </div>
 </div>
+
 
     {/* Prize / Amharic Panel */}
     <div className="bg-blue-900 text-center text-white flex flex-col items-center justify-center">

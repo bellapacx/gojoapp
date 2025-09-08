@@ -107,10 +107,22 @@ export default function WinningCardsModal({
     if (manualCardId) updateWinningPattern(manualCardId);
   }, [manualCardId, winningPattern, allBingoCards, calledNumbers]);
 
-  const isWinningCell = (cardId, rowIdx, colIdx) => {
+   const isWinningCell = (cardId, rowIdx, colIdx, num) => {
     const pattern = winningPatterns[cardId];
-    if (!pattern) return false;
-    return pattern.some(([r, c]) => r === rowIdx && c === colIdx);
+    const isInPattern = pattern?.some(([r, c]) => r === rowIdx && c === colIdx);
+
+    // ✅ Always check corners
+    const isCorner =
+      (rowIdx === 0 && colIdx === 0) || // top-left
+      (rowIdx === 0 && colIdx === 4) || // top-right
+      (rowIdx === 4 && colIdx === 0) || // bottom-left
+      (rowIdx === 4 && colIdx === 4);   // bottom-right
+
+    if (isCorner && isMarked(num, calledNumbersSet)) {
+      return true; // force green if corner number is called
+    }
+
+    return isInPattern || false;
   };
 
   const cardGridFullyMarked = (card) =>
@@ -160,22 +172,23 @@ export default function WinningCardsModal({
           <div className={`space-y-1 w-full max-w-xs mx-auto ${isLocked ? 'opacity-50 pointer-events-none' : ''}`}>
             {cardGrid.map((row,rowIndex)=>(
               <div key={rowIndex} className="grid grid-cols-5 gap-1">
-                {row.map((num,colIndex)=>(
-                  <div
-                    key={`${displayedCard.card_id}-r${rowIndex}-c${colIndex}`}
-                    className={`p-2 text-center font-semibold rounded-sm border border-white/10 text-sm ${
-                      num === null
-                        ? 'bg-gray-700 text-white/80'
-                        : isWinningCell(displayedCard.card_id.toString(),rowIndex,colIndex)
-                          ? 'bg-green-600 text-white font-bold animate-pulse'
-                          : isMarked(num,calledNumbersSet)
-                            ? 'bg-red-600 text-white font-semibold'
-                            : 'bg-white/5 text-white/60'
-                    }`}
-                  >
-                    {num===null?'FREE':num.toString().padStart(2,'0')}
-                  </div>
-                ))}
+               {row.map((num, colIndex) => (
+  <div
+    key={`${displayedCard.card_id}-r${rowIndex}-c${colIndex}`}
+    className={`p-2 text-center font-semibold rounded-sm border border-white/10 text-sm ${
+      num === null
+        ? 'bg-gray-700 text-white/80'
+        : isWinningCell(displayedCard.card_id.toString(), rowIndex, colIndex, num)
+          ? 'bg-green-600 text-white font-bold animate-pulse'
+          : isMarked(num, calledNumbersSet)
+            ? 'bg-red-600 text-white font-semibold'
+            : 'bg-white/5 text-white/60'
+    }`}
+  >
+    {num === null ? 'FREE' : num.toString().padStart(2, '0')}
+  </div>
+))}
+
               </div>
             ))}
           </div>
