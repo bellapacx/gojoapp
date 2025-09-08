@@ -29,21 +29,29 @@ const getAllLinesCoords = () => {
   return lines;
 };
 
-// Return all completed lines for a card
+// Return all completed lines for a card, including corners
 const getCompletedLines = (card, calledNumbersSet) => {
   const grid = getCardGrid(card);
-  return getAllLinesCoords().filter(line =>
+
+  let completedLines = getAllLinesCoords().filter(line =>
     line.every(([r, c]) => isMarked(grid[r][c], calledNumbersSet))
   );
+
+  // Add corners as a line
+  const corners = [[0,0],[0,4],[4,0],[4,4]];
+  if (corners.every(([r,c]) => isMarked(grid[r][c], calledNumbersSet))) {
+    completedLines.push(corners);
+  }
+
+  return completedLines;
 };
 
-// Pattern coordinates
-const getFullHouseCoords = (card) => Array.from({length:5}, (_,i)=>Array.from({length:5}, (_,j)=>[i,j])).flat();
-const getFourCornersCoords = () => [[0,0],[0,4],[4,0],[4,4]];
+// Other pattern coordinates
+const getFullHouseCoords = () => [...Array(5).keys()].flatMap(r => [...Array(5).keys()].map(c => [r,c]));
 const getCrossCoords = () => {
   const middle = 2;
   return [...Array(5).keys()].map(i => [middle,i])
-    .concat([...Array(5).keys()].filter(i=>i!==middle).map(i => [i,middle]));
+         .concat([...Array(5).keys()].filter(i=>i!==middle).map(i => [i,middle]));
 };
 const getInnerCornersAndCenterCoords = () => [[1,1],[1,3],[3,1],[3,3],[2,2]];
 
@@ -60,13 +68,13 @@ export default function WinningCardsModal({
   const [winningPatterns, setWinningPatterns] = useState({});
   const [lockedCards, setLockedCards] = useState(new Set());
   const calledNumbersSet = new Set(calledNumbers);
-  const { playBingoCall, playShuffle, playStartGame, playPauseGame, playNoIdGame } = useAudioManager();
+  const { playNoIdGame, playWinGame, playLock,playFailedGame } = useAudioManager();
 
   useEffect(() => {
     if (isOpen) setManualCardId(initialManualCardId?.toString() || '');
   }, [isOpen, initialManualCardId]);
 
-  // Compute which coordinates to highlight based on pattern & completion
+  // --- Compute which cells should be highlighted green ---
   const updateWinningPattern = (cardId) => {
     const card = allBingoCards.find(c => c.card_id === Number(cardId));
     if (!card) return;
@@ -75,46 +83,30 @@ export default function WinningCardsModal({
     const completedLines = getCompletedLines(card, calledNumbersSet);
 
     switch (winningPattern) {
-      case '1 Line': {
-    const linesWithCorners = [...completedLines];
-    const displayedCard = allBingoCards.find(c => c.card_id === Number(cardId));
-    if (displayedCard && fourCornersMarked(displayedCard, calledNumbersSet)) {
-      linesWithCorners.push(getFourCornersCoords());
-    }
-    if (linesWithCorners.length >= 1) coords = linesWithCorners[0];
-    break;
-  }
-
-  case '2 Lines': {
-    const linesWithCorners = [...completedLines];
-    const displayedCard = allBingoCards.find(c => c.card_id === Number(cardId));
-    if (displayedCard && fourCornersMarked(displayedCard, calledNumbersSet)) {
-      linesWithCorners.push(getFourCornersCoords());
-    }
-    if (linesWithCorners.length >= 2) coords = [...linesWithCorners[0], ...linesWithCorners[1]];
-    break;
-  }
-
-  case '3 Lines': {
-    const linesWithCorners = [...completedLines];
-    const displayedCard = allBingoCards.find(c => c.card_id === Number(cardId));
-    if (displayedCard && fourCornersMarked(displayedCard, calledNumbersSet)) {
-      linesWithCorners.push(getFourCornersCoords());
-    }
-    if (linesWithCorners.length >= 3) coords = [...linesWithCorners[0], ...linesWithCorners[1], ...linesWithCorners[2]];
-    break;
-  }
-      case 'Full House':
-        if (cardGridFullyMarked(card)) coords = getFullHouseCoords(card);
+      case '1 Line':
+        if (completedLines.length >= 1) coords = completedLines.flat();
         break;
-      case 'Four Corners':
-        if (fourCornersMarked(card, calledNumbersSet)) coords = getFourCornersCoords();
+      case '2 Lines':
+        if (completedLines.length >= 2) coords = completedLines.flat();
+      case '3 Lines':
+        if (completedLines.length >= 3) coords = completedLines.flat();
+        break;
+      case 'Full House':
+        if (getFullHouseCoords().every(([r,c]) => isMarked(card['BINGO'[c]][r], calledNumbersSet)))
+          coords = getFullHouseCoords();
         break;
       case 'Cross':
-        if (crossMarked(card, calledNumbersSet)) coords = getCrossCoords();
+        if (getCrossCoords().every(([r,c]) => isMarked(card['BINGO'[c]][r], calledNumbersSet)))
+          coords = getCrossCoords();
         break;
       case 'Inner Corners + Center':
-        if (innerCornersAndCenterMarked(card, calledNumbersSet)) coords = getInnerCornersAndCenterCoords();
+        if (getInnerCornersAndCenterCoords().every(([r,c]) => isMarked(card['BINGO'[c]][r], calledNumbersSet)))
+          coords = getInnerCornersAndCenterCoords();
+        break;
+      case 'Four Corners':
+        const corners = [[0,0],[0,4],[4,0],[4,4]];
+        if (corners.every(([r,c]) => isMarked(card['BINGO'[c]][r], calledNumbersSet)))
+          coords = corners;
         break;
       default:
         break;
@@ -127,42 +119,10 @@ export default function WinningCardsModal({
     if (manualCardId) updateWinningPattern(manualCardId);
   }, [manualCardId, winningPattern, allBingoCards, calledNumbers]);
 
-  // ✅ Check if all 4 corners are called
-  const areAllCornersCalled = (card) =>
-    getFourCornersCoords().every(([r, c]) =>
-      isMarked(card['BINGO'[c]][r], calledNumbersSet)
-    );
-
-  const isWinningCell = (cardId, rowIdx, colIdx, num) => {
+  const isWinningCell = (cardId, rowIdx, colIdx) => {
     const pattern = winningPatterns[cardId];
-    const isInPattern = pattern?.some(([r, c]) => r === rowIdx && c === colIdx);
-
-    // Check corners green only when all corners are called
-    const isCorner =
-      (rowIdx === 0 && colIdx === 0) ||
-      (rowIdx === 0 && colIdx === 4) ||
-      (rowIdx === 4 && colIdx === 0) ||
-      (rowIdx === 4 && colIdx === 4);
-
-    const displayedCard = allBingoCards.find(c => c.card_id === Number(cardId));
-    const allCornersCalled = displayedCard && areAllCornersCalled(displayedCard);
-
-    if (isCorner && allCornersCalled) return true;
-
-    return isInPattern || false;
+    return pattern?.some(([r, c]) => r === rowIdx && c === colIdx) || false;
   };
-
-  const cardGridFullyMarked = (card) =>
-    getFullHouseCoords(card).every(([r,c]) => isMarked(card['BINGO'[c]][r], calledNumbersSet));
-
-  const fourCornersMarked = (card, calledNumbersSet) =>
-    getFourCornersCoords().every(([r,c]) => isMarked(card['BINGO'[c]][r], calledNumbersSet));
-
-  const crossMarked = (card, calledNumbersSet) =>
-    getCrossCoords().every(([r,c]) => isMarked(card['BINGO'[c]][r], calledNumbersSet));
-
-  const innerCornersAndCenterMarked = (card, calledNumbersSet) =>
-    getInnerCornersAndCenterCoords().every(([r,c]) => isMarked(card['BINGO'[c]][r], calledNumbersSet));
 
   if (!isOpen) return null;
 
@@ -170,9 +130,9 @@ export default function WinningCardsModal({
   const cardGrid = displayedCard ? getCardGrid(displayedCard) : [];
   const cardCategoryColumns = ['B','I','N','G','O'];
   const isLocked = manualCardId && lockedCards.has(Number(manualCardId));
-
-  const playSound = (src) => { try { new Audio(src).play(); } catch {} };
-
+  const playwin = () => {
+  playWinGame();
+};
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
       <div className="bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 rounded-2xl shadow-2xl border border-white/20 p-8 w-full max-w-3xl overflow-y-auto relative text-white">
@@ -205,7 +165,7 @@ export default function WinningCardsModal({
                     className={`p-2 text-center font-semibold rounded-sm border border-white/10 text-sm ${
                       num === null
                         ? 'bg-gray-700 text-white/80'
-                        : isWinningCell(displayedCard.card_id.toString(), rowIndex, colIndex, num)
+                        : isWinningCell(displayedCard.card_id.toString(), rowIndex, colIndex)
                           ? 'bg-green-600 text-white font-bold animate-pulse'
                           : isMarked(num, calledNumbersSet)
                             ? 'bg-red-600 text-white font-semibold'
@@ -222,15 +182,13 @@ export default function WinningCardsModal({
 
         {/* Buttons */}
         <div className='flex justify-center mt-6 gap-2 flex-wrap'>
-          <button disabled={isLocked} onClick={() => playSound('/game/win.m4a')}
-            className={`px-4 py-2 rounded text-white font-semibold transition ${isLocked ? 'bg-gray-500 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'}`}>
+          <button disabled={isLocked} onClick={()=> {playwin()}} className={`px-4 py-2 rounded text-white font-semibold transition ${isLocked ? 'bg-gray-500 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'}`}>
             Good Bingo
           </button>
-          <button disabled={isLocked} onClick={() => playSound('/game/failed.m4a')}
-            className={`px-4 py-2 rounded text-white font-semibold transition ${isLocked ? 'bg-gray-500 cursor-not-allowed' : 'bg-red-600 hover:bg-red-700'}`}>
+          <button disabled={isLocked} onClick={()=> {playFailedGame()}} className={`px-4 py-2 rounded text-white font-semibold transition ${isLocked ? 'bg-gray-500 cursor-not-allowed' : 'bg-red-600 hover:bg-red-700'}`}>
             Not Bingo
           </button>
-          <button disabled={isLocked} onClick={() => { playSound('/game/lock.m4a'); if (manualCardId) setLockedCards(prev => new Set(prev).add(Number(manualCardId))); }}
+          <button disabled={isLocked} onClick={() => { playLock(); if (manualCardId) setLockedCards(prev => new Set(prev).add(Number(manualCardId))); }}
             className={`px-4 py-2 rounded text-white font-semibold transition ${isLocked ? 'bg-gray-500 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}>
             እሰር
           </button>
@@ -246,8 +204,7 @@ export default function WinningCardsModal({
               onChange={e => setManualCardId(e.target.value)}
               className="px-2 py-1 rounded text-white bg-black/20 border border-white/30 
                 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition 
-                w-32 text-center appearance-none [&::-webkit-inner-spin-button]:appearance-none 
-                [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield]"
+                w-32 text-center"
             />
             <button
               onClick={() => {

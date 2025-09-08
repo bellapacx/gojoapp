@@ -47,7 +47,7 @@ export const useAudioManager = () => {
     }
 
     // Preload other game sounds
-    ["/game/shuffle.m4a", "/game/start_game.m4a", "/game/pause_game.m4a","/game/noid.m4a"].forEach(
+    ["/game/shuffle.m4a", "/game/start_game.m4a", "/game/pause_game.m4a","/game/noid.m4a", "/game/win.m4a","/game/lock.m4a","/game/failed.m4a"].forEach(
       (path) => {
         const audio = new Audio(path);
         const source = audioContextRef.current.createMediaElementSource(audio);
@@ -81,13 +81,18 @@ export const useAudioManager = () => {
   const playStartGame = () => playSound("/game/start_game.m4a");
   const playPauseGame = () => playSound("/game/pause_game.m4a");
     const playNoIdGame = () => playSound("/game/noid.m4a");
-
+    const playWinGame = () => playSound("/game/win.m4a");
+    const playLock = () => playSound("/game/lock.m4a");
+    const playFailedGame = () => playSound("/game/failed.m4a");
   return {
     playBingoCall,
     playShuffle,
     playStartGame,
     playPauseGame,
     playSound,
-    playNoIdGame
+    playNoIdGame,
+    playLock,
+    playWinGame,
+    playFailedGame
   };
 };
