@@ -84,7 +84,7 @@ export default function WinningCardsModal({
 
     switch (winningPattern) {
       case '1 Line':
-        if (completedLines.length > 0) coords = completedLines.flat();
+        if (completedLines.length >= 1) coords = completedLines.flat();
         break;
       case '2 Lines':
         if (completedLines.length >= 1) coords = completedLines.flat();
