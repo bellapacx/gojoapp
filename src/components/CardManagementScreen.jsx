@@ -7,7 +7,7 @@ export default function CardManagementScreen({ round ,selectedCards, setCurrentV
    const [rounds, setRound] = useState(1);
   const [bet, setBet] = useState(10);
   const [commission] = useState('20%');
-  const [interval] = useState('6 sec');
+  const [interval] = useState('7 sec');
   const [pattern, setPattern] = useState('1 Line');
   const [language] = useState('Amharic');
   const [balance, setBalance] = useState(0);

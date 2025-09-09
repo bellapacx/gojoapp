@@ -1139,6 +1139,7 @@ const playShuffleSound = () => {
       <option>Amharic1</option>
     </select>
     <select className="border px-2 py-1 rounded">
+      <option>7 second interval</option>
       <option>6 second interval</option>
     </select>
     <div className="flex flex-col sm:flex-row gap-3 w-40">
