@@ -126,7 +126,7 @@ useEffect(() => {
       return res.json();
     })
     .then(data => setBingoCards(data))
-    .catch(() => setBingoCards(bingoCards)); // fallback to default
+    .catch(() => alert("connection problem")); // fallback to default
 }, []);
 
 
