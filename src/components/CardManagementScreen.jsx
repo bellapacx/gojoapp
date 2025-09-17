@@ -41,7 +41,7 @@ const handleRefresh = async () => {
     const shopId = localStorage.getItem("shopid");
     if (!shopId) return;
 
-    const res = await fetch(`https://gojbingoapi.onrender.com/round/${shopId}`);
+    const res = await fetch(`https://bingo-api-production-1b06.up.railway.app/round/${shopId}`);
     if (!res.ok) throw new Error("Failed to fetch round data");
 
     const data = await res.json();
@@ -64,7 +64,7 @@ useEffect(() => {
   const fetchShopData = async () => {
     try {
       const shop_id = localStorage.getItem('shopid');
-      const res = await fetch(`https://gojbingoapi.onrender.com/shop/${shop_id}`);
+      const res = await fetch(`https://bingo-api-production-1b06.up.railway.app/shop/${shop_id}`);
       if (!res.ok) throw new Error('Failed to fetch shop data');
 
       const { balance, commission_rate } = await res.json();

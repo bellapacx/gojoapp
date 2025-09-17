@@ -20,7 +20,7 @@ const LoginScreen = ({ setCurrentUser, setCurrentView }) => {
     setErrorMsg('');
 
     try {
-      const response = await fetch('https://gojbingoapi.onrender.com/loginshop', {  // adjust URL as needed
+      const response = await fetch('https://bingo-api-production-1b06.up.railway.app/loginshop', {  // adjust URL as needed
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

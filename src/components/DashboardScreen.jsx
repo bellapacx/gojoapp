@@ -616,7 +616,7 @@ const handleManualChecks = async () => {
       // Submit winning to backend
       try {
       const shopId = localStorage.getItem('shopid');
-      const res = await fetch("https://gojbingoapi.onrender.com/startgame", {
+      const res = await fetch("https://bingo-api-production-1b06.up.railway.app/startgame", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -697,7 +697,7 @@ const handleManualCheck = async () => {
     if (shouldPost) {
       const shopId = localStorage.getItem('shopid');
 
-      const res = await fetch("https://gojbingoapi.onrender.com/startgame", {
+      const res = await fetch("https://bingo-api-production-1b06.up.railway.app/startgame", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
