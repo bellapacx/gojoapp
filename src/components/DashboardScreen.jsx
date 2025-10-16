@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Play, Pause, RotateCcw, Maximize2 } from "react-feather";
 import WinningCardsModal from "./WinningcardsModal";
 import { submitWinning } from "../service/api"; // Adjust the import path as necessary
-import bingoCards from "../data/bingoCards.json"; // Ensure this path is correct
+
 import { useAudioManager } from "./audiomanager";
 const NUMBER_RANGE = Array.from({ length: 75 }, (_, i) => i + 1);
 const CATEGORIES = {
